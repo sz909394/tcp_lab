@@ -10,8 +10,39 @@ void DUMMY_CODE(Targs &&... /* unused */) {}
 
 using namespace std;
 
-void TCPReceiver::segment_received(const TCPSegment &seg) { DUMMY_CODE(seg); }
+void TCPReceiver::segment_received(const TCPSegment &seg) {
+    if (!_ISN_FLAG) {
+        if (seg.header().syn) {
+            _ISN_FLAG = true;
+            _ISN = seg.header().seqno;
+            std::string data{};
+            for (auto it = seg.payload().str().begin(); it != seg.payload().str().end(); it++) {
+                data.push_back(*it);
+            }
+            _reassembler.push_substring(data, 0, seg.header().fin);
+        }
+    } else {
+        if (!_reassembler.stream_out().input_ended()) {
+            uint64_t checkpoint = _reassembler.stream_out().bytes_written() - 1;
+            uint64_t index = unwrap(seg.header().seqno, _ISN, checkpoint);
+            std::string data{};
+            for (auto it = seg.payload().str().begin(); it != seg.payload().str().end(); it++) {
+                data.push_back(*it);
+            }
+            _reassembler.push_substring(data, (index - 1), seg.header().fin);
+        }
+    }
+}
 
-optional<WrappingInt32> TCPReceiver::ackno() const { return {}; }
+optional<WrappingInt32> TCPReceiver::ackno() const {
+    if (!_ISN_FLAG)
+        return {};
+    else {
+        if (!_reassembler.stream_out().input_ended())
+            return {wrap(_reassembler.stream_out().bytes_written() + 1, _ISN)};
+        else
+            return {wrap(_reassembler.stream_out().bytes_written() + 2, _ISN)};
+    }
+}
 
-size_t TCPReceiver::window_size() const { return {}; }
+size_t TCPReceiver::window_size() const { return (_capacity - _reassembler.stream_out().buffer_size()); }
