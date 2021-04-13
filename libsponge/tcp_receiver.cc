@@ -23,15 +23,20 @@ void TCPReceiver::segment_received(const TCPSegment &seg) {
             uint64_t index = unwrap(seg.header().seqno, _ISN, checkpoint);
             uint64_t _index{0};
             uint64_t _index_upper{0};
-            
-            if(seg.payload().copy().size() == 0) {_index = index;}
-            else {_index = (index+seg.payload().copy().size() - 1);}
 
-            if(window_size()){_index_upper=unwrap(ackno().value(), _ISN, checkpoint) + window_size() - 1;}
-            else {_index_upper=unwrap(ackno().value(), _ISN, checkpoint);}
+            if (seg.payload().copy().size() == 0) {
+                _index = index;
+            } else {
+                _index = (index + seg.payload().copy().size() - 1);
+            }
 
-            if((index >= 1) && (_index >= unwrap(ackno().value(), _ISN, checkpoint)) \
-                && (index <= _index_upper))
+            if (window_size()) {
+                _index_upper = unwrap(ackno().value(), _ISN, checkpoint) + window_size() - 1;
+            } else {
+                _index_upper = unwrap(ackno().value(), _ISN, checkpoint);
+            }
+
+            if ((index >= 1) && (_index >= unwrap(ackno().value(), _ISN, checkpoint)) && (index <= _index_upper))
                 _reassembler.push_substring(seg.payload().copy(), (index - 1), seg.header().fin);
         }
     }
