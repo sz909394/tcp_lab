@@ -15,21 +15,13 @@ void TCPReceiver::segment_received(const TCPSegment &seg) {
         if (seg.header().syn) {
             _ISN_FLAG = true;
             _ISN = seg.header().seqno;
-            std::string data{};
-            for (auto it = seg.payload().str().begin(); it != seg.payload().str().end(); it++) {
-                data.push_back(*it);
-            }
-            _reassembler.push_substring(data, 0, seg.header().fin);
+            _reassembler.push_substring(seg.payload().copy(), 0, seg.header().fin);
         }
     } else {
         if (!_reassembler.stream_out().input_ended()) {
             uint64_t checkpoint = _reassembler.stream_out().bytes_written() - 1;
             uint64_t index = unwrap(seg.header().seqno, _ISN, checkpoint);
-            std::string data{};
-            for (auto it = seg.payload().str().begin(); it != seg.payload().str().end(); it++) {
-                data.push_back(*it);
-            }
-            _reassembler.push_substring(data, (index - 1), seg.header().fin);
+            _reassembler.push_substring(seg.payload().copy(), (index - 1), seg.header().fin);
         }
     }
 }
