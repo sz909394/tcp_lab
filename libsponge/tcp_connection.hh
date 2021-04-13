@@ -101,6 +101,13 @@ class TCPConnection {
     void send_all_segment();
     bool LISTEN();
     bool SYN_SENT();
+    bool RECEIVER_FIN_RECV();
+    bool SENDER_FIN_ACKED();
+    bool TIME_WAIT();
+    bool LAST_ACK();
+    bool SENDER_SYN_ACKED();
+    bool CLOSE_WAIT();
+    bool SENDER_FIN_SENT();
 };
 
 #endif  // SPONGE_LIBSPONGE_TCP_FACTORED_HH
