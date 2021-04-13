@@ -54,10 +54,6 @@ void TCPConnection::segment_received(const TCPSegment &seg) {
         // 当 FSM 处于 LAST_ACK 状态时，如果接收到的 ack 就是FIN的ack，则 FSM 转为 CLOSED.
         bool state = LAST_ACK();
         _sender.ack_received(seg.header().ackno, seg.header().win);
-        if (CLOSE_WAIT()) {
-            _sender.fill_window();
-            send_all_segment();
-        }
         if (state && !bytes_in_flight())
             _active = false;
         return;

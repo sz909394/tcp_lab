@@ -140,6 +140,8 @@ void TCPSender::ack_received(const WrappingInt32 ackno, const uint16_t window_si
         _remote_win_size = _remote_win_size - _bytes_in_flight;
     else
         _remote_win_size = 0;
+    if (next_seqno_absolute() > 0)
+        fill_window();
 }
 
 //! \param[in] ms_since_last_tick the number of milliseconds since the last call to this method
