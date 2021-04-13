@@ -37,6 +37,8 @@ void TCPConnection::segment_received(const TCPSegment &seg) {
             _sender.send_empty_segment();
         else
             _sender.fill_window();
+        if (_sender.segments_out().empty())
+            _sender.send_empty_segment();
         TCPSegment &s = _sender.segments_out().front();
         if (_receiver.ackno().has_value()) {
             s.header().ackno = _receiver.ackno().value();
