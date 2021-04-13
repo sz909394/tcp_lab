@@ -98,7 +98,7 @@ size_t TCPConnection::write(const string &data) {
 void TCPConnection::tick(const size_t ms_since_last_tick) {
     _time_since_last_segment_received = _time_since_last_segment_received + ms_since_last_tick;
     if (TIME_WAIT()) {
-        if (!_linger_after_streams_finish || (_time_since_last_segment_received >= 10 * _cfg.rt_timeout)) {
+        if (_time_since_last_segment_received >= 10 * _cfg.rt_timeout) {
             _active = false;
             return;
         }
@@ -191,7 +191,7 @@ bool TCPConnection::SENDER_FIN_SENT() {
            _sender.bytes_in_flight();
 }
 
-bool TCPConnection::TIME_WAIT() { return RECEIVER_FIN_RECV() && SENDER_FIN_ACKED(); }
+bool TCPConnection::TIME_WAIT() { return RECEIVER_FIN_RECV() && SENDER_FIN_ACKED() && _linger_after_streams_finish; }
 
 bool TCPConnection::LAST_ACK() { return RECEIVER_FIN_RECV() && SENDER_FIN_SENT() && !_linger_after_streams_finish; }
 
