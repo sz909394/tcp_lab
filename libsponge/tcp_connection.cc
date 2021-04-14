@@ -112,13 +112,15 @@ void TCPConnection::tick(const size_t ms_since_last_tick) {
 }
 
 void TCPConnection::end_input_stream() {
+#if 0
     if (SYN_SENT() || LISTEN()) {
         _active = false;
     } else {
+#endif
         _sender.stream_in().end_input();
         _sender.fill_window();
         send_all_segment();
-    }
+//    }
 }
 
 void TCPConnection::connect() {
