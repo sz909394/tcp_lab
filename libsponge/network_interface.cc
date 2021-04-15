@@ -91,17 +91,23 @@ optional<InternetDatagram> NetworkInterface::recv_frame(const EthernetFrame &fra
                 map_0.hop_mac_addr = s.sender_ethernet_address;
                 IP_TO_ETHER_SETS.insert(map_0);
 
-                for (auto it = IP_Datagrams_outstanding.begin(); it != IP_Datagrams_outstanding.end(); it++) {
-                    Address dst{"0", 0};
+                for (auto it = IP_Datagrams_outstanding.begin(); it != IP_Datagrams_outstanding.end();) {
                     if (it->next_hop == s.sender_ip_address)
+                    {
+                        Address dst{"0", 0};
                         send_datagram(it->Datagram, dst.from_ipv4_numeric(s.sender_ip_address));
-                    IP_Datagrams_outstanding.erase(it);
+                        IP_Datagrams_outstanding.erase(it++);
+                    }
+                    else
+                        it++;
                 }
 
                 if (s.opcode == s.OPCODE_REPLY) {
-                    for (auto it = ARP_REQ_SETS.begin(); it != ARP_REQ_SETS.end(); it++) {
+                    for (auto it = ARP_REQ_SETS.begin(); it != ARP_REQ_SETS.end();) {
                         if (it->target_ip_address == s.sender_ip_address)
-                            ARP_REQ_SETS.erase(it);
+                            ARP_REQ_SETS.erase(it++);
+                        else
+                            it++;
                     }
                 }
 
@@ -137,9 +143,11 @@ void NetworkInterface::tick(const size_t ms_since_last_tick) {
             _frames_out.push(it->ARP_REQ_FRAME);
         }
     }
-    for (auto it = IP_TO_ETHER_SETS.begin(); it != IP_TO_ETHER_SETS.end(); it++) {
+    for (auto it = IP_TO_ETHER_SETS.begin(); it != IP_TO_ETHER_SETS.end();) {
         it->timer = it->timer + ms_since_last_tick;
         if (it->timer > IP_TO_ETHER_TIMEOUT)
-            IP_TO_ETHER_SETS.erase(it);
+            IP_TO_ETHER_SETS.erase(it++);
+        else
+            it++;
     }
 }
