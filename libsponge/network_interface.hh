@@ -7,6 +7,7 @@
 
 #include <optional>
 #include <queue>
+#include <set>
 
 //! \brief A "network interface" that connects IP (the internet layer, or network layer)
 //! with Ethernet (the network access layer, or link layer).
@@ -39,6 +40,43 @@ class NetworkInterface {
 
     //! outbound queue of Ethernet frames that the NetworkInterface wants sent
     std::queue<EthernetFrame> _frames_out{};
+    const size_t ARP_MESSAGE_TIMEOUT = 5000;   // 5 seconds
+    const size_t IP_TO_ETHER_TIMEOUT = 30000;  // 30 seconds
+
+    // structure for queue the IP datagram which need to wait for ARP request!
+    struct IP_Datagram {
+        uint32_t next_hop;
+        InternetDatagram Datagram;
+        bool operator<(const IP_Datagram &a) const {
+            //按hop_ip从大到小排列
+            return a.next_hop < next_hop;
+        }
+    };
+    std::set<IP_Datagram> IP_Datagrams_outstanding{};
+
+    // structure for cache IP-TO-ETHERNET mapping
+    struct IP_TO_ETHER_SET {
+        uint32_t hop_ip{0};
+        EthernetAddress hop_mac_addr{0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
+        mutable size_t timer{0};
+        bool operator<(const IP_TO_ETHER_SET &a) const {
+            //按hop_ip从大到小排列
+            return a.hop_ip < hop_ip;
+        }
+    };
+    std::set<IP_TO_ETHER_SET> IP_TO_ETHER_SETS{};
+
+    // structure for cache ARP request
+    struct ARP_REQ_SET {
+        uint32_t target_ip_address{0};
+        EthernetFrame ARP_REQ_FRAME{};
+        mutable size_t timer{0};
+        bool operator<(const ARP_REQ_SET &a) const {
+            //按hop_ip从大到小排列
+            return a.target_ip_address < target_ip_address;
+        }
+    };
+    std::set<ARP_REQ_SET> ARP_REQ_SETS{};
 
   public:
     //! \brief Construct a network interface with given Ethernet (network-access-layer) and IP (internet-layer) addresses
