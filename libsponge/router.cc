@@ -34,23 +34,23 @@ void Router::add_route(const uint32_t route_prefix,
 //! \param[in] dgram The datagram to be routed
 void Router::route_one_datagram(InternetDatagram &dgram) {
     std::multiset<route_table_entry>::iterator it;
-    for(it = _route_table.begin(); it != _route_table.end(); it++)
-    {
+    for (it = _route_table.begin(); it != _route_table.end(); it++) {
         uint32_t mask{};
-        if(it->prefix_length >= 32)
+        if (it->prefix_length >= 32)
             mask = 0xffffffff;
         else
             mask = ~((2 << (31 - it->prefix_length)) - 1);
-        if((mask & dgram.header().dst) == (mask & it->route_prefix))
+        if ((mask & dgram.header().dst) == (mask & it->route_prefix))
             break;
     }
-    if(it == _route_table.end()) return;
-    if((dgram.header().ttl == 0) || ((dgram.header().ttl - 1) == 0)) return;
+    if (it == _route_table.end())
+        return;
+    if ((dgram.header().ttl == 0) || ((dgram.header().ttl - 1) == 0))
+        return;
     dgram.header().ttl = dgram.header().ttl - 1;
-    if(it->next_hop.has_value())
+    if (it->next_hop.has_value())
         interface(it->interface_num).send_datagram(dgram, it->next_hop.value());
-    else
-    {
+    else {
         Address dst{"0", 0};
         interface(it->interface_num).send_datagram(dgram, dst.from_ipv4_numeric(dgram.header().dst));
     }

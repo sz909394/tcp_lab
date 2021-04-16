@@ -92,13 +92,11 @@ optional<InternetDatagram> NetworkInterface::recv_frame(const EthernetFrame &fra
                 IP_TO_ETHER_SETS.insert(map_0);
 
                 for (auto it = IP_Datagrams_outstanding.begin(); it != IP_Datagrams_outstanding.end();) {
-                    if (it->next_hop == s.sender_ip_address)
-                    {
+                    if (it->next_hop == s.sender_ip_address) {
                         Address dst{"0", 0};
                         send_datagram(it->Datagram, dst.from_ipv4_numeric(s.sender_ip_address));
                         IP_Datagrams_outstanding.erase(it++);
-                    }
-                    else
+                    } else
                         it++;
                 }
 

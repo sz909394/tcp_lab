@@ -41,14 +41,14 @@ class AsyncNetworkInterface : public NetworkInterface {
 //! \brief A router that has multiple network interfaces and
 //! performs longest-prefix-match routing between them.
 class Router {
-    struct route_table_entry{
+    struct route_table_entry {
         const uint32_t route_prefix;
         const uint8_t prefix_length;
         std::optional<Address> next_hop;
         size_t interface_num;
         bool operator<(const route_table_entry &a) const {
-        //按 prefix_length 从长到短排列
-        return a.prefix_length < prefix_length;
+            //按 prefix_length 从长到短排列
+            return a.prefix_length < prefix_length;
         }
     };
     std::multiset<route_table_entry> _route_table{};
