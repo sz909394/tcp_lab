@@ -28,13 +28,7 @@ void Router::add_route(const uint32_t route_prefix,
                        const size_t interface_num) {
     cerr << "DEBUG: adding route " << Address::from_ipv4_numeric(route_prefix).ip() << "/" << int(prefix_length)
          << " => " << (next_hop.has_value() ? next_hop->ip() : "(direct)") << " on interface " << interface_num << "\n";
-    uint32_t mask{};
-    if(prefix_length >= 32)
-        mask = 0xffffffff;
-    else
-        mask = ~((2 << (31 - prefix_length)) - 1);
-    mask = (route_prefix & mask);
-    _route_table.insert({mask, next_hop, interface_num});
+    _route_table.insert({route_prefix, prefix_length, next_hop, interface_num});
 }
 
 //! \param[in] dgram The datagram to be routed
@@ -42,7 +36,12 @@ void Router::route_one_datagram(InternetDatagram &dgram) {
     std::multiset<route_table_entry>::iterator it;
     for(it = _route_table.begin(); it != _route_table.end(); it++)
     {
-        if((it->mask & dgram.header().dst) == it->mask)
+        uint32_t mask{};
+        if(it->prefix_length >= 32)
+            mask = 0xffffffff;
+        else
+            mask = ~((2 << (31 - it->prefix_length)) - 1);
+        if((mask & dgram.header().dst) == (mask & it->route_prefix))
             break;
     }
     if(it == _route_table.end()) return;
